@@ -1,12 +1,19 @@
 import { Router } from "express";
-import { login, logout, register } from "../controllers/user.controller.js";
+import { changepassword, forgotpassword, getprofile, login, logout, register, resestpassword, updateprofile } from "../controllers/user.controller.js";
 import asyncWrap from "../utils/asyncWrap.js";
+import { isLoggedin } from "../middlewares/auth.middleware.js";
 
 const router=Router();
 
 //todo file -profile photo upload
 router.post("/register",asyncWrap(register))
-router.post("/login",login)
-router.get("/logout",logout)
+router.post("/login",asyncWrap(login))
+router.get("/logout",asyncWrap(isLoggedin), logout)
+router.get("/getprofile",asyncWrap(getprofile))
+router.post("/reset",asyncWrap(forgotpassword))
+router.post("/reset:resetToken",asyncWrap(resestpassword))
+router.post("/change-password",asyncWrap(changepassword))
+router.put("/update",asyncWrap(updateprofile))
+
 
 export default router;
