@@ -17,7 +17,14 @@ app.use(express.json())
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser())
 app.use(morgan("dev"))
-
+ app.use(
+   cors({
+     origin: process.env.FRONTED_URL,
+     credentials: true,
+     methods: ["GET", "POST", "PUT", "DELETE"],
+     allowedHeaders: ["Content-Type"],
+   })
+ );
 app.use("/ping",(req,res)=>{
     res.send(`pong`)
 })

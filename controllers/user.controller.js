@@ -1,7 +1,7 @@
 import Apperror from "../utils/error.util.js";
 import User from "../models/user.model.js"
 import cloudinary from "cloudinary"
-import fs from "fs";
+import fs from 'fs/promises'; // Use promise-based API
 import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto"
 const cookieOptions={
@@ -34,24 +34,34 @@ const register=async(req,res,next)=>{
             return next(new Apperror("user registration failed ",500))
         }
         //to do file upload
-        if(req.file){
-            try{
-                const result=await cloudinary.v2.uploader.upload(req.file.path,{
-                   folder:"BLOG" ,
-                   width:250,
-                   height:250,
-                   gravity:"faces",
-                   crop:"fill",
-                });
-                if(result){
-                    user.avatar.public_id=result.public_id;
-                    user.avatar.secure_url=result.secure_url;
-                    await fs.rm(`uploads/${req.file.filename}`);
-                }
-            }catch(error){
-                return next(new Apperror(error.message||"file upload failed, please try again",500))
-            }
-        }
+        // File upload to Cloudinary
+  if (req.file) {
+    try {
+      console.log('Uploading to Cloudinary:', req.file.path);
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "BLOG",
+        width: 250,
+        height: 250,
+        gravity: "faces",
+        crop: "fill",
+      });
+      console.log('Cloudinary upload result:', result);
+      if (result) {
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+      }
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      return next(new Apperror(error.message || "File upload to Cloudinary failed, please try again", 500));
+    } finally {
+      try {
+        await fs.rm(`uploads/${req.file.filename}`);
+        console.log('Local file deleted:', req.file.filename);
+      } catch (deleteError) {
+        console.error('Error deleting local file:', deleteError);
+      }
+    }
+  }
 
         await user.save();
         user.password=undefined;
