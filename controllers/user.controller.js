@@ -157,33 +157,52 @@ const forgotpassword=async(req,res,next)=>{
     })
 
 }
-const resestpassword=async(req,res,next)=>{
-    const{resetToken}=req.params;
-    const{password}=req.body;
+const resetpassword = async (req, res, next) => {
+    try {
+        const { resetToken } = req.params;
+        const { password } = req.body;
 
-    const forgotPasswordToken=crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+        // Debug: Log request details
+        console.log('Reset token:', resetToken);
+        console.log('Request body:', req.body);
 
-    const user=await User.findOne({
-        forgotPasswordToken,
-        forgotPasswordExpiry:{$gt:Date.now()},
-    });
-    if(!user){
-        return next(new Apperror("link is invalid expired, please try again! ",400))
+        if (!password) {
+            return next(new Apperror('Password is required', 400));
+        }
+
+        // Hash the reset token
+        const forgotPasswordToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+
+        // Find user by reset token and expiry
+        const user = await User.findOne({
+            forgotPasswordToken,
+            forgotPasswordExpiry: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return next(new Apperror('Invalid or expired reset link, please try again', 400));
+        }
+
+        // Set plain password and clear token fields
+        user.password = password;
+        user.forgotPasswordToken = undefined;
+        user.forgotPasswordExpiry = undefined;
+
+        // Save to trigger pre('save') hook for hashing
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Password reset successfully',
+        });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        return next(new Apperror('Server error: Failed to reset password', 500));
     }
-    user.password=undefined;
-    user.forgotPasswordToken=undefined;
-    user.forgotPasswordExpiry=undefined;
-
-    await user.save();
-
-    res.status(200).json({
-        success:true,
-        message:"password changed successfully"
-    })
-}
+};
 
 const getprofile=async(req,res,next)=>{
         const userid=req.user.id;
@@ -267,7 +286,7 @@ export {
     login,
     logout,
     forgotpassword,
-    resestpassword,
+    resetpassword,
     getprofile,
     changepassword,
     updateprofile
