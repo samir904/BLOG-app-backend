@@ -244,7 +244,7 @@ const changepassword=async(req,res,next)=>{
 
 const updateprofile=async(req,res,next)=>{
     const{userName}=req.body;
-    const id=req.user;
+    const id=req.user.id;
     const user=await User.findById(id)
     if(!user){
         return next(new Apperror("User does not exist",400))
@@ -266,11 +266,17 @@ const updateprofile=async(req,res,next)=>{
             if(result){
                 user.avatar.public_id=(await result).public_id;
                 user.avatar.secure_url=(await result).secure_url;
-                await fs.rm(`uploads/${req.file.filename}`)
             }
         }catch(error){
             return next(new Apperror(error.message||"File not uploaded, please try again!",500))
-        }
+        }finally {
+      try {
+        await fs.rm(`uploads/${req.file.filename}`);
+        console.log('Local file deleted:', req.file.filename);
+      } catch (deleteError) {
+        console.error('Error deleting local file:', deleteError);
+      }
+    }
     }
     await user.save();
 
