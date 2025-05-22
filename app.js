@@ -3,11 +3,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors"
 import { config } from "dotenv";
 import cloudinary from "cloudinary"
-
+import postroute from "./routes/post.route.js"
 import userroute from "./routes/user.route.js"
 import morgan from "morgan";
 import errormiddleware from "./middlewares/error.middleware.js";
-
+import commentroute from "./routes/comment.route.js"
 
 
 
@@ -30,6 +30,8 @@ app.use("/ping",(req,res)=>{
 })
 
 app.use("/api/v1/user",userroute)
+app.use("/api/v1/post",postroute)
+app.use("/api/v1/comment",commentroute)
 //more route for blog post and else
 
 
