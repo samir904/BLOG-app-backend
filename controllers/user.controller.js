@@ -252,6 +252,9 @@ const updateprofile=async(req,res,next)=>{
     if(!userName){
         return next(new Apperror("All fields are required",400))
     }
+   
+        user.userName=userName;
+
 
     if(req.file){
         await cloudinary.v2.uploader.destroy(user.avatar.public_id);

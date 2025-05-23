@@ -3,7 +3,6 @@ import Apperror from "../utils/error.util.js"
 import cloudinary from "cloudinary"
 import fs from "fs/promises"
 import mongoose from "mongoose";
-import path from "path";
  export const createPost=async(req,res,next)=>{
     const {content}=req.body;
     const user=req.user;//from isloggedin middleware
@@ -24,9 +23,6 @@ import path from "path";
     if(!post){
         return next(new Apperror("Course could not be created, please try again!"))
     }
-
-    
-
 
     if(req.file){
         try{
@@ -64,18 +60,42 @@ import path from "path";
     })
 }
 
-export const getPosts=async(req,res,next)=>{
-    const posts=await Post.find()
-    .populate("user","userName email")//populate username and other fields ,select only username and email
-    .populate("comments")//optionally populate comments if needed
-    .sort({createdAt:-1});//sort by newest first
+// backend/controllers/postController.js
+export const getPosts = async (req, res, next) => {
+  try {
+    // Extract page and limit from query parameters, with defaults
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Calculate the number of documents to skip
+    const skip = (page - 1) * limit;
+
+    // Get the total number of posts for pagination metadata
+    const totalPosts = await Post.countDocuments();
+
+    // Fetch paginated posts
+    const posts = await Post.find()
+      .populate("user", "userName avatar email") // Populate user fields
+      .populate("comments") // Optionally populate comments
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(skip) // Skip documents for pagination
+      .limit(limit); // Limit the number of documents
 
     res.status(200).json({
-        success:true,
-        message:"Post fetched successfully",
-        posts
-    })
-}
+      success: true,
+      message: "Posts fetched successfully",
+      posts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalPosts / limit),
+        totalPosts,
+        hasMore: page * limit < totalPosts, // Indicate if there are more posts to load
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getPost=async(req,res,next)=>{
     const {id} =req.params;
