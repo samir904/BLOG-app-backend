@@ -7,7 +7,9 @@ import crypto from "crypto"
 const cookieOptions={
     maxAge:7*24*60*60*1000,
     httpOnly:true,
-    secure:true
+    secure: process.env.NODE_ENV === "production", // True in production (HTTPS)
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None for cross-site
+  path: "/",
 }
 const register=async(req,res,next)=>{
         const{userName,email,password}=req.body;
